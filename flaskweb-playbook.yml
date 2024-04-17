@@ -13,6 +13,11 @@
       - virtualenv
       - nginx
 
+  - name: Install Gunicorn with pip
+    pip:
+      name: gunicorn
+      state: present
+
   - name: Create a directory for the app
     file:
       path: /var/www/flaskapp
