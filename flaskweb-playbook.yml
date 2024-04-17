@@ -27,6 +27,6 @@
         url: "http://3.17.23.5:5000"
         method: GET
         return_content: yes
-        register: result
-        failed_when: result.status != 200
+      register: result
+      failed_when: result.status != 200
 ...
