@@ -6,9 +6,17 @@
     git_repo: https://github.com/lizbabz/flask-web-app.git
     project_folder: /home/centos/flask-web-app
     app_entry: flaskweb.py
-    python_executable: python
+    python_executable: python3
+    venv_path: "{{ project_folder }}/venv"
 
   tasks:
+    - name: Install Python3 and virtualenv
+      yum:
+        name:
+          - python3
+          - python3-venv
+        state: present
+
     - name: Clone the repository
       git:
         repo: "{{ git_repo }}"
@@ -16,8 +24,18 @@
         clone: yes
         update: yes
 
+    - name: Set up virtual environment
+      command: "{{ python_executable }} -m venv {{ venv_path }}"
+      args:
+        creates: "{{ venv_path }}"
+
+    - name: Install Python packages
+      pip:
+        requirements: "{{ project_folder }}/requirements.txt"
+        virtualenv: "{{ venv_path }}"
+
     - name: Start Flask application
-      shell: "nohup {{ python_executable }} {{ project_folder }}/{{ app_entry }} &"
+      shell: "nohup {{ venv_path }}/bin/python {{ project_folder }}/{{ app_entry }} &"
       args:
         chdir: "{{ project_folder }}"
         creates: "{{ project_folder }}/nohup.out"
@@ -29,4 +47,5 @@
         return_content: yes
       register: result
       failed_when: result.status != 200
+
 ...
