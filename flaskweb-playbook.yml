@@ -20,7 +20,7 @@
 
   - name: Copy the Flask app to the servers
     copy:
-      src: /path/to/your/app
+      src: /home/ubuntu/flask-web-app/
       dest: /var/www/flaskapp
 
   - name: Set up a virtual environment and install dependencies
