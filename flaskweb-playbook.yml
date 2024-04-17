@@ -1,51 +1,57 @@
 ---
-- name: Deploy Flask web application
-  hosts: g1
+- hosts: web_servers
   become: yes
-  vars:
-    git_repo: https://github.com/lizbabz/flask-web-app.git
-    project_folder: /home/centos/flask-web-app
-    app_entry: flaskweb.py
-    python_executable: python3
-    venv_path: "{{ project_folder }}/venv"
-
   tasks:
-    - name: Install Python3 and virtualenv
-      yum:
-        name:
-          - python3
-          - python3-virtualenv
-        state: present
+  - name: Install necessary packages
+    apt:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+      - python3-pip
+      - python3-dev
+      - virtualenv
+      - nginx
 
-    - name: Clone the repository
-      git:
-        repo: "{{ git_repo }}"
-        dest: "{{ project_folder }}"
-        clone: yes
-        update: yes
+  - name: Create a directory for the app
+    file:
+      path: /var/www/flaskapp
+      state: directory
 
-    - name: Set up virtual environment
-      command: "{{ python_executable }} -m venv {{ venv_path }}"
-      args:
-        creates: "{{ venv_path }}"
+  - name: Copy the Flask app to the servers
+    copy:
+      src: /path/to/your/app
+      dest: /var/www/flaskapp
 
-    - name: Install Python packages
-      pip:
-        requirements: "{{ project_folder }}/requirements.txt"
-        virtualenv: "{{ venv_path }}"
+  - name: Set up a virtual environment and install dependencies
+    shell: |
+      virtualenv venv
+      source venv/bin/activate
+      pip install -r requirements.txt
+    args:
+      chdir: /var/www/flaskapp
 
-    - name: Start Flask application
-      shell: "nohup {{ venv_path }}/bin/python {{ project_folder }}/{{ app_entry }} &"
-      args:
-        chdir: "{{ project_folder }}"
-        creates: "{{ project_folder }}/nohup.out"
+  - name: Configure Gunicorn systemd service
+    template:
+      src: gunicorn.service.j2
+      dest: /etc/systemd/system/gunicorn.service
 
-    - name: Check if the web application is up and running
-      uri:
-        url: "http://3.17.23.5:5000"
-        method: GET
-        return_content: yes
-      register: result
-      failed_when: result.status != 200
+  - name: Enable and start the Gunicorn service
+    systemd:
+      name: gunicorn
+      enabled: yes
+      state: started
 
+  - name: Configure Nginx to proxy to Gunicorn
+    template:
+      src: nginx_flask.j2
+      dest: /etc/nginx/sites-available/flaskapp
+    notify:
+      - restart nginx
+
+  handlers:
+  - name: restart nginx
+    systemd:
+      name: nginx
+      state: restarted
 ...
