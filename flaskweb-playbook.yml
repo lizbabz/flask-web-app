@@ -21,7 +21,7 @@
         name: python
         path: /usr/bin/python
 
-   - name: Start Flask application
+    - name: Start Flask application
       shell: "nohup {{ python_executable }} {{ project_folder }}/{{ app_entry }} &"
       args:
         chdir: "{{ project_folder }}"
