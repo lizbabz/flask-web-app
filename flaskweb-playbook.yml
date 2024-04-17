@@ -1,0 +1,34 @@
+---
+- name: Deploy Flask web application
+  hosts: g1
+  become: yes
+  vars:
+    git_repo: https://github.com/lizbabz/flask-web-app.git
+    project_folder: /home/centos/flask-web-app
+    app_entry: flaskweb.py
+    python_executable: python
+
+  tasks:
+    - name: Clone the repository
+      git:
+        repo: "{{ git_repo }}"
+        dest: "{{ project_folder }}"
+        clone: yes
+        update: yes
+
+    - name: Ensure Python is used
+      alternatives:
+        name: python
+        path: /usr/bin/python
+
+   - name: Start Flask application
+      shell: "nohup {{ python_executable }} {{ project_folder }}/{{ app_entry }} &"
+      args:
+        chdir: "{{ project_folder }}"
+        creates: "{{ project_folder }}/nohup.out"
+
+    - name: Ensure the application is running
+      shell: "curl http://3.17.23.5/:5000"
+      register: curl_result
+      failed_when: "'Flask' not in curl_result.stdout"
+...
