@@ -16,11 +16,6 @@
         clone: yes
         update: yes
 
-    - name: Ensure Python is used
-      alternatives:
-        name: python
-        path: /usr/bin/python
-
     - name: Start Flask application
       shell: "nohup {{ python_executable }} {{ project_folder }}/{{ app_entry }} &"
       args:
